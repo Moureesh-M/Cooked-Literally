@@ -19,8 +19,11 @@ interface RecipeResult {
   time: string;
   dishes: string;
   ingredients: string[];
+  suggested_ingredients?: string[];
   steps: string[];
   payoff: string;
+  chef_notes?: string;
+  effort_level?: string;
 }
 
 export default function App() {
@@ -465,48 +468,55 @@ export default function App() {
 
                 {/* Effort Selection: Aint cookin / Can Cook / I am Ramsay */}
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-white">Effort Level</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-white">Effort Level</label>
+                    <span className="text-[11px] text-white/40">
+                      {slothLevel === 'ramsay' ? '🔥 Michelin technique + pantry upgrades' : slothLevel === 'can_cook' ? '🍳 Balanced 15-min home cook' : '🦥 Zero effort & single pan'}
+                    </span>
+                  </div>
                   <div className="grid grid-cols-3 gap-2">
                     <button
                       type="button"
                       onClick={() => setSlothLevel('aint_cookin')}
-                      className={`h-14 rounded-xl flex flex-col items-center justify-center border transition-all ${
+                      className={`h-14 rounded-xl flex flex-col items-center justify-center border transition-all cursor-pointer ${
                         slothLevel === 'aint_cookin' 
-                          ? 'bg-white text-black border-white' 
+                          ? 'bg-white text-black border-white shadow-md' 
                           : 'bg-brand-gray text-white/60 border-transparent hover:text-white'
                       }`}
                     >
                       <span className="text-xs font-semibold">Aint cookin</span>
                       <span className={`text-[10px] ${slothLevel === 'aint_cookin' ? 'text-black/60' : 'text-white/40'}`}>
-                        4-5 mins
+                        4-5 mins • 1 pan
                       </span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setSlothLevel('can_cook')}
-                      className={`h-14 rounded-xl flex flex-col items-center justify-center border transition-all ${
+                      className={`h-14 rounded-xl flex flex-col items-center justify-center border transition-all cursor-pointer ${
                         slothLevel === 'can_cook' 
-                          ? 'bg-white text-black border-white' 
+                          ? 'bg-white text-black border-white shadow-md' 
                           : 'bg-brand-gray text-white/60 border-transparent hover:text-white'
                       }`}
                     >
                       <span className="text-xs font-semibold">Can Cook</span>
                       <span className={`text-[10px] ${slothLevel === 'can_cook' ? 'text-black/60' : 'text-white/40'}`}>
-                        10-15 mins
+                        10-15 mins • scratch
                       </span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setSlothLevel('ramsay')}
-                      className={`h-14 rounded-xl flex flex-col items-center justify-center border transition-all ${
+                      className={`h-14 rounded-xl flex flex-col items-center justify-center border transition-all cursor-pointer ${
                         slothLevel === 'ramsay' 
-                          ? 'bg-white text-black border-white' 
+                          ? 'bg-gradient-to-r from-amber-200 to-amber-400 text-black border-amber-300 shadow-md font-bold' 
                           : 'bg-brand-gray text-white/60 border-transparent hover:text-white'
                       }`}
                     >
-                      <span className="text-xs font-semibold">I am Ramsay</span>
-                      <span className={`text-[10px] ${slothLevel === 'ramsay' ? 'text-black/60' : 'text-white/40'}`}>
-                        Gourmet
+                      <span className="text-xs font-bold flex items-center space-x-1">
+                        <span>I am Ramsay</span>
+                      </span>
+                      <span className={`text-[10px] ${slothLevel === 'ramsay' ? 'text-black/70 font-medium' : 'text-white/40'}`}>
+                        Gourmet • Upgrades
                       </span>
                     </button>
                   </div>
@@ -550,6 +560,21 @@ export default function App() {
                 <div className="p-6 bg-brand-gray rounded-2xl border border-white/10 space-y-4">
                   <div className="flex items-start justify-between">
                     <div>
+                      <div className="flex items-center space-x-2 mb-1">
+                        {recipe.effort_level === 'ramsay' ? (
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-400 text-black uppercase tracking-wider">
+                            🔥 Ramsay Gourmet Masterclass
+                          </span>
+                        ) : recipe.effort_level === 'can_cook' ? (
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30 uppercase tracking-wider">
+                            🍳 Scratch Home Chef (15m)
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-wider">
+                            🦥 Zero Effort Sloth (5m)
+                          </span>
+                        )}
+                      </div>
                       <h3 className="text-2xl font-semibold text-white tracking-tight">
                         {recipe.name}
                       </h3>
@@ -574,7 +599,7 @@ export default function App() {
                   {/* Ingredients Used */}
                   <div className="space-y-1.5 pt-2 border-t border-white/5">
                     <span className="text-xs font-semibold text-white/40 uppercase tracking-wider">
-                      Ingredients Processed
+                      Ingredients From Your Kitchen
                     </span>
                     <div className="flex flex-wrap gap-1.5">
                       {recipe.ingredients.map((ing, i) => (
@@ -585,26 +610,59 @@ export default function App() {
                     </div>
                   </div>
 
+                  {/* Chef's Suggested New Ingredients / Upgrades (especially for Ramsay mode) */}
+                  {recipe.suggested_ingredients && recipe.suggested_ingredients.length > 0 && (
+                    <div className="space-y-2 pt-2 border-t border-amber-500/20">
+                      <div className="flex items-center space-x-1.5 text-xs font-semibold text-amber-300 uppercase tracking-wider">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                        <span>Chef Ramsay's Suggested Additions & Flavor Upgrades</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {recipe.suggested_ingredients.map((item, i) => (
+                          <span key={i} className="px-2.5 py-1 bg-amber-500/10 border border-amber-500/30 rounded-lg text-xs text-amber-200 font-medium">
+                            + {item}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Cooking Steps */}
                   <div className="space-y-2.5 pt-2 border-t border-white/5">
                     <span className="text-xs font-semibold text-white/40 uppercase tracking-wider">
-                      Instructions (Strictly Cooking Steps)
+                      Culinary Instructions ({recipe.steps.length} Steps)
                     </span>
                     <ol className="space-y-2">
                       {recipe.steps.map((st, i) => (
                         <li key={i} className="flex items-start space-x-3 text-sm text-white/90">
-                          <span className="w-5 h-5 rounded-full bg-white/10 text-white/70 flex items-center justify-center text-xs shrink-0 mt-0.5">
+                          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs shrink-0 mt-0.5 font-medium ${
+                            recipe.effort_level === 'ramsay' ? 'bg-amber-400 text-black font-bold' : 'bg-white/10 text-white/70'
+                          }`}>
                             {i + 1}
                           </span>
-                          <span>{st}</span>
+                          <span className="leading-relaxed">{st}</span>
                         </li>
                       ))}
                     </ol>
                   </div>
 
-                  {/* Lazy Payoff */}
+                  {/* Chef Ramsay Notes / Technique */}
+                  {recipe.chef_notes && (
+                    <div className="p-3.5 bg-gradient-to-r from-amber-500/15 to-orange-500/5 rounded-xl border border-amber-500/30 space-y-1">
+                      <span className="text-xs font-bold text-amber-300 flex items-center space-x-1.5">
+                        <span>👨‍🍳 Chef's Masterclass Technique</span>
+                      </span>
+                      <p className="text-xs text-amber-100/90 leading-relaxed italic">
+                        "{recipe.chef_notes}"
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Lazy / Gourmet Payoff */}
                   <div className="p-3 bg-white/5 rounded-xl border border-white/5 space-y-1">
-                    <span className="text-xs font-semibold text-white/50">🦥 The Lazy Payoff</span>
+                    <span className="text-xs font-semibold text-white/50">
+                      {recipe.effort_level === 'ramsay' ? '🏆 The Gourmet Payoff' : '🦥 The Payoff'}
+                    </span>
                     <p className="text-xs text-white/70 leading-relaxed">
                       {recipe.payoff}
                     </p>

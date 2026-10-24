@@ -49,8 +49,11 @@ class RecipeResponse(BaseModel):
     time: str
     dishes: str
     ingredients: List[str]
+    suggested_ingredients: Optional[List[str]] = Field(default_factory=list)
     steps: List[str]
     payoff: str
+    chef_notes: Optional[str] = None
+    effort_level: Optional[str] = "aint_cookin"
 
 class TTSRequest(BaseModel):
     recipe_text: str
@@ -140,34 +143,79 @@ async def scan_pantry(
 async def generate_recipe(payload: RecipeRequest):
     """
     REST Resource: Recipe Creation
-    Synthesizes a minimal-effort, single-pan recipe using Google Gemma 2 / AI Studio.
+    Synthesizes recipes tailored strictly to the requested effort tier:
+    - 'aint_cookin': 3-5 min, 1 pan, 2-3 steps, zero prep.
+    - 'can_cook': 10-15 min, 4-5 steps, solid home cooking technique.
+    - 'ramsay': 30-45 min, 6-8 gourmet steps, Gordon Ramsay technique, suggested pantry upgrades, reduction sauce.
     """
-    effort_map = {
-        "aint_cookin": "under 5 minutes, 1 single pan only, absolute minimal effort",
-        "can_cook": "10-15 minutes, simple, clean steps",
-        "ramsay": "slightly more refined, high flavor, still strictly in 1 single pan"
-    }
-    effort_desc = effort_map.get(payload.effort_level, "under 5 minutes, 1 pan")
+    effort_tier = (payload.effort_level or "aint_cookin").strip().lower()
 
-    ai_prompt = f"""You are a professional chef who specializes in simple, low-effort cooking with whatever random ingredients are on hand.
+    if effort_tier == "ramsay":
+        tier_prompt = """
+EFFORT TIER: 'I AM RAMSAY' (Michelin-Caliber Masterclass):
+- Profile: You are Gordon Ramsay crafting a grand, multi-step, restaurant-quality gourmet dish.
+- Time: 30 - 45 mins.
+- Equipment / Cookware: Heavy cast-iron skillet, chef knife, sauce pan, tasting spoon, plating board.
+- Cooking Steps: 6 to 8 comprehensive, professional steps. You MUST include advanced culinary techniques:
+  1. Preparation & tempering (patting dry for Maillard reaction).
+  2. Smoking-hot hard sear for deep caramelized crust.
+  3. Basting (Arrosé) with foaming unsalted butter, crushed garlic cloves, and fresh woody herbs.
+  4. Deglazing the pan fond with acidity (wine, stock, or citrus).
+  5. Mounting with cold butter (monter au beurre) for a glossy velvet pan reduction.
+  6. Resting and carving against the grain.
+  7. Final seasoning with flaky salt and refined presentation.
+- Suggested Ingredients: CRITICAL: Provide 4 to 6 new ingredients or fresh herbs/aromatics NOT currently in their pantry (e.g., fresh rosemary & thyme, shallots, dry white wine or cognac, flaky Maldon sea salt, cold unsalted European butter, aged parmesan) to elevate this dish to Michelin standard.
+- Chef Notes: Include a signature Gordon Ramsay tip/quote on heat control, seasoning, or letting meat rest.
+- Payoff: A world-class gourmet experience built on fundamental culinary excellence.
+"""
+    elif effort_tier == "can_cook":
+        tier_prompt = """
+EFFORT TIER: 'CAN COOK' (Wholesome Home Chef):
+- Profile: Competent home chef creating a balanced, flavorful, scratch-made dinner.
+- Time: 12 - 18 mins.
+- Equipment / Cookware: 1 skillet and a cutting board.
+- Cooking Steps: 4 to 5 well-structured steps (dicing, sautéing, seasoning in layers, simmering).
+- Suggested Ingredients: 2 to 3 optional pantry upgrades (e.g. smoked paprika, chopped fresh parsley, lemon wedge) to brighten the meal.
+- Chef Notes: A practical home-cooking tip for optimal flavor.
+- Payoff: A delicious, well-executed homemade meal with moderate, rewarding effort.
+"""
+    else:
+        effort_tier = "aint_cookin"
+        tier_prompt = """
+EFFORT TIER: "AIN'T COOKIN'" (Ultra Minimal / Sloth Mode):
+- Profile: Maximum laziness. You refuse to chop, measure, or wash more than one item.
+- Time: 3 - 5 mins.
+- Equipment / Cookware: 1 single skillet or pan only (eat directly from pan or paper towel).
+- Cooking Steps: Exactly 2 to 3 dead-simple, foolproof steps. Zero prep.
+- Suggested Ingredients: Leave empty [] (keep it strictly to what's already on hand).
+- Chef Notes: "Keep it simple, eat fast, zero cleanup."
+- Payoff: Zero prep, zero dishes, and dinner ready in under 5 minutes.
+"""
 
-Available ingredients: {payload.ingredients}
-Requested Effort Level: {effort_desc}
+    ai_prompt = f"""You are an executive chef and master culinary educator with Michelin-star training. Your mission is to generate a truly well-made, culinary-sound recipe with precise sensory instructions, realistic heat control, and impeccable flavor balance based on the user's available pantry ingredients and chosen effort tier.
 
-CRITICAL RULES FOR RECIPE TITLE & CONTENT:
-- Generate a completely normal, appetizing culinary dish name (e.g., "Crispy Garlic Butter Bread", "Cheesy Scrambled Eggs", "Toasted Onion & Cheddar Skillet", "Garlic Butter Fried Rice").
-- DO NOT use words like "Hacktoberfest", "Hacktober", "Hackathon", "Sloth", "Lazy", "Contest", or any meta-event references anywhere in the recipe name or instructions.
-- Keep the title clean, appetizing, and realistic.
-- Keep the steps practical, delicious, and easy to follow.
+AVAILABLE INGREDIENTS:
+{payload.ingredients}
+
+{tier_prompt}
+
+CULINARY EXCELLENCE STANDARDS:
+- The dish must be realistic, genuinely appetizing, well-balanced, and delicious.
+- Do NOT make vague steps like "cook the food" or "prepare the ingredients". Every step MUST start with an active culinary verb, specify exact heat level (e.g. medium-high heat, gentle simmer, smoking hot pan), sensory timing cues (e.g. "until edges blister and butter turns nutty brown", "until bubbling and fragrant"), and approximate minutes.
+- NEVER include meta-event buzzwords ("Hacktoberfest", "Hackathon", "Sloth", "Contest", "Lazy", "AI") in the recipe title or instructions. Keep titles authentic (e.g. "Pan-Seared Rosemary Butter Steak with Glossy Reduction", "Crispy Garlic-Herb Skillet Toast", "Golden Sautéed Veggie & Egg Hash").
+- When Ramsay mode is requested, write a big, complete, multi-stage masterclass recipe featuring advanced culinary technique, elevated suggested ingredients, and classic French pan sauce emulsification.
 
 Respond strictly with a valid JSON object (no markdown, no backticks) using this exact schema:
 {{
   "name": "Appetizing Recipe Title",
-  "time": "e.g. 5 mins",
-  "dishes": "1 skillet / pan only",
-  "ingredients": ["item 1", "item 2", "item 3"],
-  "steps": ["Step 1 action", "Step 2 action", "Step 3 action"],
-  "payoff": "One punchy sentence explaining why this saved mental effort and cleanup"
+  "time": "e.g. 5 mins or 35 mins",
+  "dishes": "Dishes and cookware required",
+  "ingredients": ["items used from available ingredients"],
+  "suggested_ingredients": ["list of new/suggested ingredients to elevate the dish if Ramsay/Can Cook, or [] if aint cookin"],
+  "steps": ["Step 1 action with heat, timing, and sensory cue", "Step 2 action...", ...],
+  "payoff": "Why this matches the effort level and delivers maximum flavor",
+  "chef_notes": "Chef technique tip or Ramsay culinary wisdom",
+  "effort_level": "{effort_tier}"
 }}"""
 
     # 1. Try Hugging Face Gemma 2 endpoint if token provided
@@ -177,7 +225,7 @@ Respond strictly with a valid JSON object (no markdown, no backticks) using this
         hf_headers = {"Authorization": f"Bearer {token}"}
         hf_payload = {
             "inputs": f"<start_of_turn>user\n{ai_prompt}\n<end_of_turn>\n<start_of_turn>model\n",
-            "parameters": {"max_new_tokens": 700, "temperature": 0.7, "return_full_text": False}
+            "parameters": {"max_new_tokens": 900, "temperature": 0.7, "return_full_text": False}
         }
         try:
             async with httpx.AsyncClient(timeout=25.0) as client:
@@ -189,6 +237,9 @@ Respond strictly with a valid JSON object (no markdown, no backticks) using this
                     if match:
                         recipe_data = json.loads(match.group(0))
                         recipe_data["name"] = sanitize_recipe_title(recipe_data.get("name", ""))
+                        recipe_data["effort_level"] = effort_tier
+                        if "suggested_ingredients" not in recipe_data:
+                            recipe_data["suggested_ingredients"] = []
                         return RecipeResponse(**recipe_data)
         except Exception as e:
             print(f"HF Gemma 2 call exception: {e}")
@@ -200,7 +251,7 @@ Respond strictly with a valid JSON object (no markdown, no backticks) using this
             "contents": [{"parts": [{"text": ai_prompt}]}],
             "generationConfig": {
                 "temperature": 0.7,
-                "maxOutputTokens": 800,
+                "maxOutputTokens": 1000,
                 "responseMimeType": "application/json"
             }
         }
@@ -213,29 +264,87 @@ Respond strictly with a valid JSON object (no markdown, no backticks) using this
                     candidates = res_json.get("candidates", [])
                     if candidates:
                         raw_text = candidates[0]["content"]["parts"][0]["text"].strip()
-                        recipe_data = json.loads(raw_text)
-                        recipe_data["name"] = sanitize_recipe_title(recipe_data.get("name", ""))
-                        return RecipeResponse(**recipe_data)
+                        match = re.search(r'\{[\s\S]*\}', raw_text)
+                        if match:
+                            recipe_data = json.loads(match.group(0))
+                            recipe_data["name"] = sanitize_recipe_title(recipe_data.get("name", ""))
+                            recipe_data["effort_level"] = effort_tier
+                            if "suggested_ingredients" not in recipe_data:
+                                recipe_data["suggested_ingredients"] = []
+                            return RecipeResponse(**recipe_data)
         except Exception as e:
             print(f"Recipe AI error: {e}")
 
-    # 3. Deterministic safe fallback
+    # 3. Deterministic safe fallback with full effort-level differentiation
     raw_items = [i.strip() for i in re.split(r'[,+\n]', payload.ingredients) if i.strip()]
-    main_item = raw_items[0] if raw_items else "Pantry Staples"
+    main_item = raw_items[0] if raw_items else "Pantry Protein"
     sec_item = raw_items[1] if len(raw_items) > 1 else "butter"
 
-    return RecipeResponse(
-        name=sanitize_recipe_title(f"Crispy Pan-Toasted {main_item.title()} Skillet"),
-        time="5 mins" if payload.effort_level == "aint_cookin" else "12 mins",
-        dishes="1 pan / skillet only",
-        ingredients=raw_items or ["eggs", "bread", "butter"],
-        steps=[
-            f"Melt butter or heat oil in a single skillet over medium heat for 30 seconds.",
-            f"Add {main_item} alongside {sec_item}, swirling until sizzling, golden, and aromatic.",
-            f"Season to taste, remove from heat, and enjoy directly from the pan for zero cleanup."
-        ],
-        payoff="Zero measuring, minimal dishes, and ready in 5 minutes flat."
-    )
+    if effort_tier == "ramsay":
+        return RecipeResponse(
+            name=sanitize_recipe_title(f"Pan-Seared Herb-Basted {main_item.title()} with Velvet Pan Reduction"),
+            time="35 mins",
+            dishes="Cast-iron skillet, sauce pan, chef knife, plating board",
+            ingredients=raw_items or ["ribeye or protein", "garlic", "butter"],
+            suggested_ingredients=[
+                "Fresh thyme & rosemary sprigs",
+                "French shallots (finely minced)",
+                "Dry white wine or rich stock for deglazing",
+                "Flaky Maldon sea salt",
+                "High-fat European unsalted butter (cold cubed)",
+                "Cracked Tellicherry black peppercorns"
+            ],
+            steps=[
+                f"Preparation & Tempering: Bring {main_item} to room temperature for 15 minutes. Pat completely dry with kitchen paper towels to guarantee an aggressive, golden Maillard crust.",
+                "Heat the Pan: Heat a heavy cast-iron skillet over high heat until smoking hot. Add a high-smoke point oil and swirl until shimmering.",
+                f"The Hard Sear: Carefully lay {main_item} into the screaming hot pan away from you. Do not agitate or move for 3-4 minutes to develop a deep, caramelized crust.",
+                "Flip & Aromatics: Flip once to sear the reverse side. Immediately drop 2 tablespoons of cold butter, crushed whole garlic cloves, and fresh rosemary/thyme sprigs into the pan.",
+                f"Basting (Arrosé): Tilt the skillet slightly towards you and continuously spoon the foaming, herb-infused browned butter over {main_item} for 2-3 minutes until glistening and evenly cooked.",
+                "Deglaze & Pan Sauce: Transfer the protein to a warm board to rest for 6 minutes. Off the heat, deglaze the hot pan drippings with a splash of wine or stock, scraping up the caramelized fond with a wooden spatula.",
+                "Mount with Butter (Monter au Beurre): Swirl in cold diced butter off the heat until the sauce emulsifies into a glossy, velvety reduction.",
+                "Carve & Plate: Carve on a slight bias, drizzle the velvet reduction over top, and finish with a pinch of flaky sea salt and cracked pepper."
+            ],
+            payoff="Michelin-grade flavor depth: deeply caramelized crust, herb-infused brown butter, and an exquisite glossy reduction sauce.",
+            chef_notes="Ramsay's Rule: Color is flavor! Let the pan do the work. If you touch or move the food before it naturally releases, you destroy the sear. Season boldly and rest your protein!",
+            effort_level="ramsay"
+        )
+    elif effort_tier == "can_cook":
+        return RecipeResponse(
+            name=sanitize_recipe_title(f"Golden Sautéed {main_item.title()} & {sec_item.title()} Skillet"),
+            time="15 mins",
+            dishes="1 skillet & cutting board",
+            ingredients=raw_items or ["eggs", "bread", "butter", "cheese"],
+            suggested_ingredients=[
+                "Smoked paprika or red chili flakes",
+                "Fresh chopped parsley",
+                "Fresh lemon wedge for acidity"
+            ],
+            steps=[
+                f"Prep: Chop {main_item} and {sec_item} into uniform, bite-sized pieces for even heat distribution.",
+                f"Sauté: Melt a splash of oil or butter in a skillet over medium-high heat. Add {main_item} and sauté for 5 minutes until edges are golden.",
+                f"Layer Flavors: Stir in {sec_item}, season with salt, pepper, and a pinch of smoked paprika. Sauté for another 4 minutes until fragrant.",
+                "Finish & Serve: Squeeze fresh lemon juice over the top, garnish with chopped parsley, and serve immediately."
+            ],
+            payoff="A well-rounded, comforting home meal prepared from scratch with proper technique in 15 minutes.",
+            chef_notes="Uniform knife cuts ensure everything cooks at the exact same rate without scorching.",
+            effort_level="can_cook"
+        )
+    else:
+        return RecipeResponse(
+            name=sanitize_recipe_title(f"Crispy Pan-Toasted {main_item.title()} Skillet"),
+            time="4 mins",
+            dishes="1 skillet only (eat straight from pan or napkin)",
+            ingredients=raw_items or ["bread", "cheese", "butter"],
+            suggested_ingredients=[],
+            steps=[
+                f"Melt butter or heat oil in a single skillet over medium heat for 30 seconds.",
+                f"Toss {main_item} and {sec_item} straight into the skillet. Toast for 2 minutes per side until golden, sizzling, and fragrant.",
+                "Slide directly onto a napkin or eat straight from the pan. Zero dishes to wash!"
+            ],
+            payoff="Zero measuring, zero prep, ready in 4 minutes flat with virtually no dishes.",
+            chef_notes="Keep it effortless: eat immediately with zero cleanup.",
+            effort_level="aint_cookin"
+        )
 
 @app.post("/api/v1/recipes/narration", status_code=status.HTTP_200_OK)
 async def stream_narration(payload: TTSRequest):

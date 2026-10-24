@@ -123,9 +123,9 @@ with col1:
         st.image(uploaded_image, caption="Your Kitchen Scene", use_container_width=True)
 
     sloth_level = st.select_slider(
-        "🦥 Sloth / Effort Level:",
-        options=["Absolute Sloth (< 5 mins, one-pot/pan)", "Low Effort (10-15 mins)", "Energetic Sloth (Gourmet touch)"],
-        value="Absolute Sloth (< 5 mins, one-pot/pan)"
+        "🦥 Effort Level:",
+        options=["Ain't Cookin (< 5 mins, one-pan zero prep)", "Can Cook (10-15 mins, home cook)", "I am Ramsay (35+ mins, gourmet & suggested upgrades)"],
+        value="Ain't Cookin (< 5 mins, one-pan zero prep)"
     )
     
     generate_btn = st.button("🍳 Generate Lazy Recipe with Gemma", type="primary", use_container_width=True)
@@ -211,22 +211,39 @@ with col2:
             else:
                 detected_ingredients = preset
 
-            st.write("🧠 Cooking up a minimal-step recipe with Google Gemma...")
+            st.write("🧠 Cooking up your recipe with Google Gemma...")
+            if "Ramsay" in sloth_level:
+                tier_detail = """Tier: I AM RAMSAY (Gourmet Masterclass).
+Create a big, sophisticated gourmet restaurant recipe (30-45 mins).
+Include:
+- 6-8 detailed, professional culinary steps (hard sear, butter basting with woody herbs and garlic, deglazing fond, glossy pan reduction sauce, resting, slicing on a bias).
+- Suggested New Ingredients to elevate the dish (4-6 new items like fresh thyme, shallots, white wine, flaky sea salt, high-fat butter).
+- Gordon Ramsay technique notes on heat and crust."""
+            elif "Can Cook" in sloth_level:
+                tier_detail = """Tier: CAN COOK (Balanced Home Meal).
+Create a 15-minute wholesome scratch-made dinner (4-5 steps, layered seasoning, fresh herb finish)."""
+            else:
+                tier_detail = """Tier: AIN'T COOKIN' (Ultra Minimal).
+Create a 4-5 minute, 1-pan zero prep meal with 2-3 dead-simple steps."""
+
             gemma_prompt = f"""<start_of_turn>user
-You are a culinary assistant helping to cook a simple, delicious meal with available ingredients.
+You are a culinary assistant helping to cook with available ingredients.
 Ingredients available: {detected_ingredients}
 Effort Level requested: {sloth_level}
+{tier_detail}
 
 IMPORTANT:
-- Generate a completely normal, delicious recipe title (e.g. "Crispy Garlic Butter Bread", "Cheesy Scrambled Eggs", "Golden Pan-Seared Tofu").
+- Generate a completely normal, appetizing recipe title (e.g. "Pan-Seared Herb-Basted Steak with Pan Reduction", "Crispy Garlic Butter Bread").
 - NEVER include meta-event buzzwords like "Hacktoberfest", "Hackathon", "Sloth", or gimmick titles. Keep it clean and appetizing.
 
 Format with:
-1. 🍳 Recipe Name (natural, appetizing dish name)
-2. ⏱️ Total Time & Dishes Used (keep dishes to absolute minimum, e.g. 1 bowl or 1 skillet)
-3. 📝 Minimalist Ingredients
-4. 🍳 3-Step Simple Instructions
-5. 💡 The Payoff: Exactly why this saved mental energy and kitchen mess.
+1. 🍳 Recipe Name
+2. ⏱️ Total Time & Cookware Used
+3. 📝 Kitchen Ingredients Used
+4. ✨ Chef's Suggested Upgrades & New Ingredients (if Ramsay or Can Cook)
+5. 🍳 Detailed Cooking Instructions
+6. 👨‍🍳 Chef's Technique / Notes
+7. 💡 The Payoff
 <end_of_turn>
 <start_of_turn>model
 """
@@ -235,8 +252,65 @@ Format with:
                 recipe_output = query_gemma_hf(gemma_prompt, hf_token)
                 
             if not recipe_output:
-                # High quality local fallback generated according to Gemma 2 system instructions
-                recipe_output = f"""### 🍳 Crispy Garlic Cheddar Pan Toast
+                if "Ramsay" in sloth_level:
+                    recipe_output = f"""### 🍳 Pan-Seared Herb-Basted Skillet with Velvet Pan Reduction
+
+⏱️ **Total Time:** 35 minutes | **Cookware:** Heavy cast-iron skillet, sauce pan, chef knife, wooden board.
+
+#### 📝 Kitchen Ingredients Used:
+- Available detected items: {detected_ingredients}
+- Butter & cooking oil
+
+#### ✨ Chef Ramsay's Suggested Additions:
+- Fresh rosemary & thyme sprigs
+- French shallots (finely minced)
+- Splash of dry white wine or rich stock (for deglazing)
+- Cold unsalted European butter (cubed)
+- Flaky Maldon sea salt & cracked black peppercorns
+
+#### 🍳 7 Masterclass Steps:
+1. **Preparation & Tempering:** Bring your main protein/staple to room temperature for 15 minutes. Pat completely dry with kitchen towels for a crisp, aggressive sear.
+2. **The Smoking Sear:** Heat a heavy skillet over high heat until smoking hot. Add high-smoke point oil and lay the ingredients in away from you. Do not agitate for 3-4 minutes to develop a deep caramelized Maillard crust.
+3. **Flip & Aromatics:** Flip once. Immediately drop 2 tablespoons of cold butter, crushed garlic cloves, and fresh thyme/rosemary sprigs into the pan.
+4. **Basting (Arrosé):** Tilt the skillet slightly and continuously spoon the foaming, herb-infused nutty browned butter over top for 2-3 minutes.
+5. **Resting:** Transfer to a warm board to rest for 5-6 minutes so juices redistribute evenly.
+6. **Deglaze & Pan Reduction:** Off the heat, deglaze pan drippings with a splash of wine or stock, scraping up fond. Swirl in cold diced butter until emulsified into a glossy velvet reduction.
+7. **Carve & Finish:** Slice on a bias, spoon over the rich pan reduction, and finish with flaky sea salt.
+
+---
+#### 👨‍🍳 Chef's Technique:
+*"Color equals flavor! Let the pan do the work. If you touch or move the food before it naturally releases, you destroy the golden crust. Rest your food and season boldly!"*
+
+#### 💡 The Gourmet Payoff:
+Michelin-level depth of flavor: deep caramelization, herb brown-butter basting, and an exquisite velvet pan reduction.
+"""
+                elif "Can Cook" in sloth_level:
+                    recipe_output = f"""### 🍳 Golden Sautéed Skillet Hash with Fresh Herbs
+
+⏱️ **Total Time:** 15 minutes | **Cookware:** 1 skillet & cutting board.
+
+#### 📝 What You Need:
+- Available pantry items: {detected_ingredients}
+- 1 tbsp butter or olive oil
+- Salt, cracked pepper, pinch of smoked paprika
+
+#### ✨ Suggested Additions:
+- Fresh parsley or chives
+- Squeeze of fresh lemon juice
+
+#### 🍳 4 Simple Steps:
+1. **Prep:** Dice ingredients into uniform bite-sized pieces for even heat distribution.
+2. **Sauté:** Heat butter/oil in a skillet over medium-high heat. Add primary items and sauté for 5 minutes until edges are golden.
+3. **Layer Flavors:** Stir in remaining ingredients, season with salt, pepper, and smoked paprika. Sauté for 4 minutes until fragrant.
+4. **Finish:** Finish with a squeeze of lemon and fresh chopped herbs, then serve warm.
+
+---
+#### 💡 The Payoff:
+A wholesome, scratch-made home meal with layered flavors in just 15 minutes.
+"""
+                else:
+                    # High quality local fallback generated according to Gemma 2 system instructions
+                    recipe_output = f"""### 🍳 Crispy Garlic Cheddar Pan Toast
 
 ⏱️ **Total Time:** 5 minutes | **Dishes to Wash:** 1 skillet, 1 spatula.
 
