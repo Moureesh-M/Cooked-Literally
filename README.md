@@ -1,4 +1,4 @@
-# 🍳 Cooked Literally
+# Cooked Literally
 
 > Snap a photo of your fridge, let open-weight AI figure out what to cook, and have ElevenLabs read the steps aloud while your hands stay clean. Zero effort. One pan. Dinner done.
 
@@ -7,13 +7,13 @@ Theme: **"AI Belongs to Everyone: Slow and Steady / Sloth Day"**
 
 ---
 
-## ✨ Features
+## Features
 
-- **📸 Snap or Upload** — take a webcam photo or upload a fridge picture; multimodal vision AI auto-detects your ingredients
-- **🧠 Gemma 2 Recipe Synthesis** — Google Gemma 2 (via Hugging Face) turns your random pantry into a real, single-pan recipe
-- **🔊 Hands-Free Voice Guide** — ElevenLabs reads only the cooking steps aloud so you never touch your screen with greasy fingers
-- **🌐 Browser Voice Fallback** — works offline via the Web Speech API with no API key required
-- **⚡ Three Effort Levels** — *Ain't Cookin'* (5 min), *Can Cook* (15 min), *I am Ramsay* (gourmet)
+- **Snap or Upload** — take a webcam photo or upload a fridge picture; multimodal vision AI auto-detects your ingredients
+- **Gemma 2 Recipe Synthesis** — Google Gemma 2 (via Hugging Face) turns your random pantry into a real, single-pan recipe
+- **Hands-Free Voice Guide** — ElevenLabs reads only the cooking steps aloud so you never touch your screen with greasy fingers
+- **Browser Voice Fallback** — works offline via the Web Speech API with no API key required
+- **Three Effort Levels** — *Ain't Cookin'* (5 min), *Can Cook* (15 min), *I am Ramsay* (gourmet)
 
 ---
 
