@@ -17,16 +17,6 @@ Theme: **"AI Belongs to Everyone: Slow and Steady / Sloth Day"**
 
 ---
 
-## 🏆 Hackathon Tracks
-
-| Track | Prize |
-| :--- | :--- |
-| Best Use of Gemma (Open-Weight) | **$200 USD** |
-| Best Use of ElevenLabs | **$100 USD** |
-| DEV Challenge Week 3 — Sloth Day | **$250 USD** |
-
----
-
 ## 🗂️ Project Structure
 
 ```
@@ -94,6 +84,7 @@ Open `.env` and fill in your keys:
 ```env
 GOOGLE_API_KEY=AIza...
 HF_TOKEN=hf_...
+TO NOTE: ELEVENLABS is Optional(Browser TTS is provided as default)
 ELEVENLABS_API_KEY=sk_...
 ELEVENLABS_VOICE_ID=MmQVkVZnQ0dUbfWzcW6f
 ```
@@ -147,7 +138,7 @@ Open `http://localhost:8501`
 | Method | Endpoint | Description |
 | :----- | :------- | :---------- |
 | `GET`  | `/api/v1/health` | Health check |
-| `POST` | `/api/v1/pantry/scan` | Upload fridge photo → get detected ingredients |
+| `POST` | `/api/v1/pantry/scan` | Upload ingredients photo → get detected ingredients |
 | `POST` | `/api/v1/recipes/generate` | Ingredients + effort level → recipe JSON |
 | `POST` | `/api/v1/recipes/narration` | Recipe steps → MP3 audio stream |
 
