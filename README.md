@@ -1,127 +1,193 @@
-# 🦥 SlothChef AI: Zero-Effort Cooking with Open-Weight AI & Hands-Free Voice
+# 🍳 Cooked Literally
 
-> Built for **Hacktoberfest 2026** (Hacktoberfest Hack Day Chennai x Commit Culture)  
-> Theme: **"AI Belongs to Everyone: Slow and Steady / Sloth Day"**
+> Snap a photo of your fridge, let open-weight AI figure out what to cook, and have ElevenLabs read the steps aloud while your hands stay clean. Zero effort. One pan. Dinner done.
 
----
-
-## 🌟 1. Key Functionalities
-
-### 1. Multi-Modal Pantry & Fridge Ingestion
-* **Image Upload / Webcam Capture:** Snap a real-time picture of whatever is lying on your kitchen counter or inside your fridge.
-* **Open-Weight Vision Parsing:** Identifies available raw ingredients and condiments without needing manual text entry.
-* **Quick Presets:** Instant testing profiles (Student Dorm, Late Night Snacks, Healthy Sloth).
-
-### 2. Google Gemma 2 Culinary Reasoning
-* **Effort Slider:** Configurable sloth levels (*Absolute Sloth < 5 mins*, *Low Effort 10-15 mins*, *Energetic Sloth*).
-* **Single-Pan / Minimal Dish Optimization:** Designed specifically around the Sloth Day mandate — keeps dishwashing to an absolute minimum (typically 1 pan or bowl).
-* **"The Lazy Payoff":** Every recipe explicitly details how much time, mental friction, and kitchen mess was saved.
-
-### 3. Hands-Free Voice Cooking Guide (ElevenLabs Voice AI)
-* **Instruction-Only Audio Filter:** Automatically extracts and cleans *only* the numbered cooking steps, stripping titles, ingredient lists, emojis, and preamble.
-* **Custom Voice ID Support:** Works with default voices or custom cloned voices (e.g. `MmQVkVZnQ0dUbfWzcW6f`).
-* **Zero-Touch Kitchen Companion:** Avoids smearing grease, flour, or sauce over laptop keyboards or phone screens while cooking.
-* **Browser Voice Fallback:** Built-in Web Speech API narration when running completely offline or without an API key.
+Built for **Hacktoberfest 2026** — Hack Day Chennai × Commit Culture  
+Theme: **"AI Belongs to Everyone: Slow and Steady / Sloth Day"**
 
 ---
 
-## 🏆 Hackathon & Sponsor Tracks Mapped
+## ✨ Features
 
-| Track | Prize | How SlothChef Qualifies |
-| :--- | :--- | :--- |
-| **Main Goal** | Official Badge & Swag | Original build with open-weight models at its core. |
-| **Best Use of Gemma** | **$200 USD** | Uses Google's open-weight Gemma 2 model to reason over pantry combinations and minimize culinary complexity. |
-| **Best Use of ElevenLabs** | **$100 USD** | Integrates ElevenLabs `eleven_turbo_v2_5` for latency-free voice narration with tailored Voice IDs. |
-| **DEV Challenge: Week 3 ("Sloth Day")** | **$250 USD** | Directly tackles the theme: rewarding laziness and eliminating the chore of staring blankly into an open fridge. |
+- **📸 Snap or Upload** — take a webcam photo or upload a fridge picture; multimodal vision AI auto-detects your ingredients
+- **🧠 Gemma 2 Recipe Synthesis** — Google Gemma 2 (via Hugging Face) turns your random pantry into a real, single-pan recipe
+- **🔊 Hands-Free Voice Guide** — ElevenLabs reads only the cooking steps aloud so you never touch your screen with greasy fingers
+- **🌐 Browser Voice Fallback** — works offline via the Web Speech API with no API key required
+- **⚡ Three Effort Levels** — *Ain't Cookin'* (5 min), *Can Cook* (15 min), *I am Ramsay* (gourmet)
 
 ---
 
-## 🛠️ 2. Developer Tutorial: Running & Extending SlothChef
+## 🏆 Hackathon Tracks
 
-### Step 1: Environment Setup
-Ensure Python 3.10+ is available on your machine:
-```bash
-# Clone or navigate to the project directory
-cd d:\projekt\Hacktober
+| Track | Prize |
+| :--- | :--- |
+| Best Use of Gemma (Open-Weight) | **$200 USD** |
+| Best Use of ElevenLabs | **$100 USD** |
+| DEV Challenge Week 3 — Sloth Day | **$250 USD** |
 
-# Activate the virtual environment
-.\.venv\Scripts\activate
+---
+
+## 🗂️ Project Structure
+
+```
+Cooked-Literally/
+├── backend_api.py       # FastAPI REST backend (vision scan, recipe gen, TTS narration)
+├── app.py               # Streamlit prototype (standalone, no backend required)
+├── .env.example         # Environment variable template — copy to .env and fill in keys
+├── frontend/
+│   ├── src/
+│   │   ├── App.tsx      # Main React UI — webcam, upload, recipe card, audio player
+│   │   └── index.css    # Tailwind 4 + Inter font styles
+│   ├── public/          # Logo, favicon, icons
+│   ├── package.json
+│   └── vite.config.ts
+└── README.md
 ```
 
-### Step 2: Install Core Dependencies
-If setting up on a new machine:
+---
+
+## 🔑 Getting Your API Keys
+
+You need up to **three** keys (all have free tiers):
+
+### 1. Google AI Studio Key (for Vision + Recipe Generation)
+1. Go to [aistudio.google.com](https://aistudio.google.com)
+2. Click **Get API Key** → **Create API Key**
+3. Copy the key — it starts with `AIza...`
+
+### 2. Hugging Face Token (for Gemma 2 open-weight model)
+1. Sign up / log in at [huggingface.co](https://huggingface.co)
+2. Go to **Settings → Access Tokens**
+3. Click **New Token** → choose **Read** role → copy it (`hf_...`)
+4. Also visit [google/gemma-2-9b-it](https://huggingface.co/google/gemma-2-9b-it) and click **Agree** to accept the model licence
+
+### 3. ElevenLabs API Key (for voice narration — optional)
+1. Sign up at [elevenlabs.io](https://elevenlabs.io) — free tier gives 10,000 chars/month
+2. Go to **Profile → API Keys** → copy your key (`sk_...`)
+3. To use a custom Voice ID, go to **Voices → your voice** and copy the ID from the URL
+
+> **No keys?** The app still works — it falls back to a curated local recipe and browser voice narration automatically.
+
+---
+
+## 🚀 Running Locally
+
+### Prerequisites
+- Python 3.10+
+- Node.js 18+
+
+---
+
+### Option A — Full Stack (React Frontend + FastAPI Backend) ⭐ Recommended
+
+**Step 1 — Clone & set up environment**
 ```bash
-pip install streamlit requests pillow
+git clone https://github.com/Moureesh-M/Cooked-Literally.git
+cd Cooked-Literally
 ```
 
-### Step 3: Launching the App
-Run the Streamlit application:
+**Step 2 — Create your `.env` file**
 ```bash
+cp .env.example .env
+```
+Open `.env` and fill in your keys:
+```env
+GOOGLE_API_KEY=AIza...
+HF_TOKEN=hf_...
+ELEVENLABS_API_KEY=sk_...
+ELEVENLABS_VOICE_ID=MmQVkVZnQ0dUbfWzcW6f
+```
+
+**Step 3 — Set up Python virtual environment**
+```bash
+python -m venv .venv
+
+# Windows
+.venv\Scripts\activate
+
+# macOS / Linux
+source .venv/bin/activate
+```
+
+**Step 4 — Install Python dependencies**
+```bash
+pip install fastapi uvicorn httpx python-dotenv python-multipart pillow requests
+```
+
+**Step 5 — Start the backend**
+```bash
+uvicorn backend_api:app --host 0.0.0.0 --port 8000
+```
+API docs available at `http://localhost:8000/docs`
+
+**Step 6 — Install and start the frontend** (in a new terminal)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173` in your browser. 🎉
+
+---
+
+### Option B — Streamlit Prototype (no frontend build needed)
+
+```bash
+# Inside the project root with .venv activated
+pip install streamlit requests pillow python-dotenv
 streamlit run app.py
 ```
-Open your browser to `http://localhost:8501`.
+Open `http://localhost:8501`
 
 ---
 
-## 🧠 3. Code Architecture Overview
+## 🔌 API Endpoints
 
-### 1. Prompt Engineering for Google Gemma
-In [`app.py`](file:///d:/projekt/Hacktober/app.py), the prompt uses Gemma's structured turn tokens (`<start_of_turn>user`, `<end_of_turn>`, `<start_of_turn>model`):
-```python
-gemma_prompt = f"""<start_of_turn>user
-You are SlothChef, an AI dedicated to International Sloth Day and Hacktoberfest 2026.
-Your goal is to save the user maximum effort and time in the kitchen.
-Ingredients available: {detected_ingredients}
-Effort Level requested: {sloth_level}
+| Method | Endpoint | Description |
+| :----- | :------- | :---------- |
+| `GET`  | `/api/v1/health` | Health check |
+| `POST` | `/api/v1/pantry/scan` | Upload fridge photo → get detected ingredients |
+| `POST` | `/api/v1/recipes/generate` | Ingredients + effort level → recipe JSON |
+| `POST` | `/api/v1/recipes/narration` | Recipe steps → MP3 audio stream |
 
-Create an original, delicious, ultra-lazy recipe.
-Format with:
-1. 🦥 Recipe Name
-2. ⏱️ Total Time & Dishes Used (keep to 1 pan/bowl)
-3. 📝 Minimalist Ingredients
-4. 🍳 3-Step Simple Instructions
-5. 🦥 The Lazy Payoff: Why this saved mental energy.
-<end_of_turn>
-<start_of_turn>model
-"""
+Full interactive docs: `http://localhost:8000/docs`
+
+---
+
+## 🧠 How It Works
+
 ```
-
-### 2. Audio Step Filter & ElevenLabs Synthesis
-To ensure the voice narrator doesn't read recipe titles or ingredients lists, regex extracts only the numbered cooking directions:
-```python
-import re
-
-def extract_cooking_steps(recipe_text):
-    # Regex slice out only the step-by-step section
-    match = re.search(r'(?:Steps|Instructions)[\s\S]*?(?=(?:---|\Z|#### 🦥 The Lazy Payoff|The Lazy Payoff))', recipe_text, re.IGNORECASE)
-    steps_text = match.group(0) if match else recipe_text
-    # Clean emojis, markdown symbols, and whitespace
-    cleaned = re.sub(r'#+\s*', '', steps_text)
-    cleaned = re.sub(r'[\*\#\_]', '', cleaned)
-    return re.sub(r'[🍳⏱️📝🦥✨]', '', cleaned).strip()
-```
-
-The cleaned instructions are sent to ElevenLabs' low-latency Turbo endpoint:
-```python
-url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
-headers = {"xi-api-key": api_key, "Content-Type": "application/json"}
-payload = {
-    "text": extract_cooking_steps(recipe_text),
-    "model_id": "eleven_turbo_v2_5",
-    "voice_settings": {"stability": 0.5, "similarity_boost": 0.8}
-}
-response = requests.post(url, headers=headers, json=payload)
+User uploads photo
+       ↓
+POST /api/v1/pantry/scan
+  → Google Gemini Vision detects ingredients
+       ↓
+POST /api/v1/recipes/generate
+  → Hugging Face Gemma 2 (or Google AI Studio fallback)
+  → Returns structured JSON recipe
+       ↓
+POST /api/v1/recipes/narration
+  → ElevenLabs eleven_turbo_v2_5 TTS
+  → Returns MP3 audio of cooking steps only
 ```
 
 ---
 
-## 🚀 4. How to Submit to Hack Day & DEV Challenge
+## 🛡️ Security Notes
 
-1. **Push your code to GitHub:**
-   - Commit `app.py`, `README.md`, and requirements.
-2. **Draft your submission post on DEV.to:**
-   - Add tag `#hf26challenge`.
-   - Highlight the **Lazy Payoff** and why **open-weight AI (Gemma)** makes running this locally/privately superior to closed APIs.
-   - Mention your use of **Gemma** and **ElevenLabs**.
-3. **Save Agent Session:**
-   - DevRelay can automatically embed our pair-programming session transcript into your DEV submission!
+- **Never commit your `.env` file** — it is in `.gitignore`
+- Use `.env.example` as a template for sharing key names without values
+- The frontend settings modal lets users enter their own keys at runtime — nothing is stored server-side
+
+---
+
+## 🤝 Contributing
+
+PRs and issues welcome. If you add a new model backend or voice provider, open a PR!
+
+---
+
+## 📄 License
+
+MIT
