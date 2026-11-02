@@ -24,6 +24,8 @@ interface RecipeResult {
   payoff: string;
   chef_notes?: string;
   effort_level?: string;
+  source?: string;
+  fallback_reason?: string | null;
 }
 
 export default function App() {
@@ -48,6 +50,8 @@ export default function App() {
   const [audioLoading, setAudioLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [audioError, setAudioError] = useState<string | null>(null);
+  const cameraRequestRef = useRef(0);
 
   // Helper to extract clean instructions for voice narration
   const getInstructionsOnly = (steps: string[]) => {
@@ -56,6 +60,7 @@ export default function App() {
 
   // Stop camera stream
   const stopCamera = React.useCallback(() => {
+    cameraRequestRef.current += 1;
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream;
       stream.getTracks().forEach(track => track.stop());
@@ -64,22 +69,31 @@ export default function App() {
     setIsCameraActive(false);
   }, []);
 
-  // Cleanup camera stream and audio blobs on unmount
+  // Cleanup camera stream and speech on unmount
   React.useEffect(() => {
     return () => {
       stopCamera();
-      if (audioUrl) {
-        URL.revokeObjectURL(audioUrl);
-      }
       window.speechSynthesis.cancel();
     };
-  }, [audioUrl, stopCamera]);
+  }, [stopCamera]);
+
+  React.useEffect(() => {
+    return () => {
+      if (audioUrl) URL.revokeObjectURL(audioUrl);
+    };
+  }, [audioUrl]);
 
   // Start webcam
   const startCamera = async () => {
+    const requestId = cameraRequestRef.current + 1;
+    cameraRequestRef.current = requestId;
     setIsCameraActive(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      if (requestId !== cameraRequestRef.current || !videoRef.current) {
+        stream.getTracks().forEach(track => track.stop());
+        return;
+      }
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
@@ -120,7 +134,7 @@ export default function App() {
     }
   };
 
-  const API_BASE = 'http://localhost:8000/api/v1';
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
   // Vision Analysis via REST: POST /api/v1/pantry/scan
   const analyzeKitchenImage = async (base64Img: string) => {
@@ -165,6 +179,10 @@ export default function App() {
   // Recipe Generation via REST: POST /api/v1/recipes/generate
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (analyzingImage) {
+      setError('Please wait for the ingredient scan to finish before generating a recipe.');
+      return;
+    }
     if (!ingredientsInput.trim() && !imagePreview) {
       setError('Please snap a picture or type in whatever ingredients you have.');
       return;
@@ -172,7 +190,7 @@ export default function App() {
 
     setError(null);
     setLoading(true);
-    setStatusMessage('Synthesizing minimal-effort recipe with Google Gemma 2...');
+    setStatusMessage('Finding a good one-pan recipe from your ingredients...');
     setCurrentStep(2);
 
     try {
@@ -193,10 +211,11 @@ export default function App() {
       const generatedRecipe: RecipeResult = await res.json();
       setRecipe(generatedRecipe);
       setCurrentStep(3);
+      setAudioError(null);
 
       // Trigger ElevenLabs Voice via REST: POST /api/v1/recipes/narration
       if (elevenApiKey.trim()) {
-        setStatusMessage('Generating hands-free narration with ElevenLabs Voice AI...');
+        setStatusMessage('Generating hands-free narration...');
         setAudioLoading(true);
 
         const voiceRes = await fetch(`${API_BASE}/recipes/narration`, {
@@ -217,12 +236,13 @@ export default function App() {
           }
           setAudioUrl(URL.createObjectURL(blob));
         } else {
-          console.warn('Voice narration error:', voiceRes.status);
+          setAudioError('Voice narration was unavailable. You can use browser narration below.');
         }
         setAudioLoading(false);
       }
     } catch (err: any) {
       setError(err?.message || 'Error communicating with REST API backend.');
+      setAudioLoading(false);
     } finally {
       setLoading(false);
       setStatusMessage('');
@@ -231,6 +251,7 @@ export default function App() {
 
   const speakWithBrowser = () => {
     if (!recipe) return;
+    setAudioError(null);
     window.speechSynthesis.cancel();
     const text = getInstructionsOnly(recipe.steps);
     const utterance = new SpeechSynthesisUtterance(text);
@@ -575,6 +596,11 @@ export default function App() {
                           </span>
                         )}
                       </div>
+                      {recipe.source === 'deterministic_fallback' && (
+                        <p className="mt-2 text-xs text-amber-300/80">
+                          AI providers were unavailable, so this recipe uses the local fallback.
+                        </p>
+                      )}
                       <h3 className="text-2xl font-semibold text-white tracking-tight">
                         {recipe.name}
                       </h3>
@@ -694,6 +720,9 @@ export default function App() {
                     </button>
                   )}
                 </div>
+                {audioError && (
+                  <p className="text-xs text-amber-300/80">{audioError}</p>
+                )}
 
                 {/* Reset Button */}
                 <button

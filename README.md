@@ -146,6 +146,12 @@ Full interactive docs: `http://localhost:8000/docs`
 
 ---
 
+## 📐 Product and engineering documentation
+
+- [Product Requirements Document](docs/PRD.md)
+- [High-Level Design](docs/HLD.md)
+- [Low-Level Design](docs/LLD.md)
+
 ## 🧠 How It Works
 
 ```
