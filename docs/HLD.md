@@ -36,6 +36,7 @@ The Streamlit application in `app.py` is a standalone prototype and parallel dem
 ### Frontend
 
 - Owns camera lifecycle, file reading, preview state, form state, loading indicators, recipe rendering, and local audio URL cleanup.
+- Provides a readable recipe page with sticky actions, explicit provider provenance, step completion, browser narration, and a focused cooking mode.
 - Sends user-controlled ingredients and selected effort tier to the API.
 - Uses browser speech synthesis without a server round trip.
 - Does not perform model inference or store provider credentials persistently.
@@ -87,7 +88,7 @@ These boundaries should become explicit modules before production so provider-sp
 4. API calls Gemma 2 when configured, then uses the same prompt with Gemini when configured.
 5. API parses, sanitizes, and validates the returned JSON against `RecipeResponse`.
 6. If no provider returns valid JSON, API constructs a tier-specific recipe and marks `source` as `deterministic_fallback`.
-7. Browser prints the validated structured recipe and identifies fallback output to the user.
+7. Browser prints the validated structured recipe, servings, safety guidance, and provider provenance to the user.
 
 ### Narration
 

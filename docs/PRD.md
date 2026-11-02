@@ -30,7 +30,7 @@ Existing recipe experiences often assume a planned shopping list, require extens
    - **Ain't Cookin'** — approximately 3–5 minutes, one pan, 2–3 steps.
    - **Can Cook** — approximately 12–18 minutes, moderate preparation.
    - **I am Ramsay** — approximately 30–45 minutes, advanced technique and optional upgrades.
-5. Provide recipe metadata: title, time, cookware, ingredients, steps, payoff, and chef notes.
+5. Provide recipe metadata: title, time, servings, cookware, ingredients, steps, payoff, chef notes, and safety guidance.
 6. Narrate only the cooking steps using ElevenLabs when configured.
 7. Preserve a usable fallback path when external AI or TTS credentials are unavailable.
 
@@ -103,6 +103,7 @@ A busy or low-motivation home cook who has miscellaneous ingredients and wants a
 
 - The API shall accept ingredients and an effort tier.
 - The response shall conform to the `RecipeResponse` schema.
+- The response shall include servings and concise safety guidance for perishable ingredients.
 - The generator shall attempt Hugging Face Gemma 2 first when a token is available.
 - It shall attempt Google AI Studio next when configured.
 - It shall return a deterministic tier-specific recipe when providers fail or are unconfigured.
@@ -140,7 +141,7 @@ The UI shall visibly represent idle, camera active, image analysis, recipe gener
 | `GET /api/v1/health` | None | `{ "status": "healthy", "service": "Cooked Literally REST API" }` |
 | `POST /api/v1/pantry/scan` | Multipart `image`, optional `hf_token` | `{ "detected_ingredients": string, "method": string }` |
 | `POST /api/v1/recipes/generate` | JSON `ingredients`, `effort_level`, optional `hf_token` | Structured recipe JSON |
-| `POST /api/v1/recipes/narration` | JSON `recipe_text`, `steps`, optional key and voice ID | `audio/mpeg` bytes |
+| `POST /api/v1/recipes/narration` | JSON `steps`, optional key and voice ID | `audio/mpeg` bytes |
 
 ## 9. Safety, privacy, and trust requirements
 
@@ -175,4 +176,3 @@ Authentication, rate limiting, managed secrets, asynchronous jobs for long-runni
 2. Whether ElevenLabs should be a server-side provider only or support browser-direct audio in a controlled architecture.
 3. Whether ingredient and allergy preferences should be persisted.
 4. Whether a recipe should be allowed to suggest ingredients the user does not have for the non-gourmet tier.
-

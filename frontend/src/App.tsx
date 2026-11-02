@@ -1,5 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { InputGroup } from './components/InputGroup';
+import { StepItem } from './components/StepItem';
+import type { EffortLevel, RecipeResult } from './types';
 import { 
   Volume2, 
   Clock, 
@@ -14,23 +17,9 @@ import {
   Settings
 } from 'lucide-react';
 
-interface RecipeResult {
-  name: string;
-  time: string;
-  dishes: string;
-  ingredients: string[];
-  suggested_ingredients?: string[];
-  steps: string[];
-  payoff: string;
-  chef_notes?: string;
-  effort_level?: string;
-  source?: string;
-  fallback_reason?: string | null;
-}
-
 export default function App() {
   const [ingredientsInput, setIngredientsInput] = useState('');
-  const [slothLevel, setSlothLevel] = useState<'aint_cookin' | 'can_cook' | 'ramsay'>('aint_cookin');
+  const [effortLevel, setEffortLevel] = useState<EffortLevel>('aint_cookin');
   const [elevenApiKey, setElevenApiKey] = useState('');
   const [voiceId, setVoiceId] = useState('MmQVkVZnQ0dUbfWzcW6f');
   const [hfToken, setHfToken] = useState('');
@@ -199,7 +188,7 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ingredients: ingredientsInput || 'fridge items',
-          effort_level: slothLevel,
+          effort_level: effortLevel,
           hf_token: hfToken.trim() || undefined
         })
       });
@@ -222,7 +211,6 @@ export default function App() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            recipe_text: generatedRecipe.name,
             steps: generatedRecipe.steps,
             eleven_api_key: elevenApiKey.trim(),
             voice_id: voiceId
@@ -492,43 +480,43 @@ export default function App() {
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-medium text-white">Effort Level</label>
                     <span className="text-[11px] text-white/40">
-                      {slothLevel === 'ramsay' ? '🔥 Michelin technique + pantry upgrades' : slothLevel === 'can_cook' ? '🍳 Balanced 15-min home cook' : '🦥 Zero effort & single pan'}
+                      {effortLevel === 'ramsay' ? '🔥 Michelin technique + pantry upgrades' : effortLevel === 'can_cook' ? '🍳 Balanced 15-min home cook' : '🦥 Zero effort & single pan'}
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     <button
                       type="button"
-                      onClick={() => setSlothLevel('aint_cookin')}
+                      onClick={() => setEffortLevel('aint_cookin')}
                       className={`h-14 rounded-xl flex flex-col items-center justify-center border transition-all cursor-pointer ${
-                        slothLevel === 'aint_cookin' 
+                        effortLevel === 'aint_cookin'
                           ? 'bg-white text-black border-white shadow-md' 
                           : 'bg-brand-gray text-white/60 border-transparent hover:text-white'
                       }`}
                     >
                       <span className="text-xs font-semibold">Aint cookin</span>
-                      <span className={`text-[10px] ${slothLevel === 'aint_cookin' ? 'text-black/60' : 'text-white/40'}`}>
+                      <span className={`text-[10px] ${effortLevel === 'aint_cookin' ? 'text-black/60' : 'text-white/40'}`}>
                         4-5 mins • 1 pan
                       </span>
                     </button>
                     <button
                       type="button"
-                      onClick={() => setSlothLevel('can_cook')}
+                      onClick={() => setEffortLevel('can_cook')}
                       className={`h-14 rounded-xl flex flex-col items-center justify-center border transition-all cursor-pointer ${
-                        slothLevel === 'can_cook' 
+                        effortLevel === 'can_cook'
                           ? 'bg-white text-black border-white shadow-md' 
                           : 'bg-brand-gray text-white/60 border-transparent hover:text-white'
                       }`}
                     >
                       <span className="text-xs font-semibold">Can Cook</span>
-                      <span className={`text-[10px] ${slothLevel === 'can_cook' ? 'text-black/60' : 'text-white/40'}`}>
+                      <span className={`text-[10px] ${effortLevel === 'can_cook' ? 'text-black/60' : 'text-white/40'}`}>
                         10-15 mins • scratch
                       </span>
                     </button>
                     <button
                       type="button"
-                      onClick={() => setSlothLevel('ramsay')}
+                      onClick={() => setEffortLevel('ramsay')}
                       className={`h-14 rounded-xl flex flex-col items-center justify-center border transition-all cursor-pointer ${
-                        slothLevel === 'ramsay' 
+                        effortLevel === 'ramsay'
                           ? 'bg-gradient-to-r from-amber-200 to-amber-400 text-black border-amber-300 shadow-md font-bold' 
                           : 'bg-brand-gray text-white/60 border-transparent hover:text-white'
                       }`}
@@ -536,7 +524,7 @@ export default function App() {
                       <span className="text-xs font-bold flex items-center space-x-1">
                         <span>I am Ramsay</span>
                       </span>
-                      <span className={`text-[10px] ${slothLevel === 'ramsay' ? 'text-black/70 font-medium' : 'text-white/40'}`}>
+                      <span className={`text-[10px] ${effortLevel === 'ramsay' ? 'text-black/70 font-medium' : 'text-white/40'}`}>
                         Gourmet • Upgrades
                       </span>
                     </button>
@@ -817,57 +805,5 @@ export default function App() {
         )}
       </AnimatePresence>
     </main>
-  );
-}
-
-/* 5. Reusable Components */
-
-export function StepItem({ number, text, active }: { number: number; text: string; active?: boolean }) {
-  return (
-    <div 
-      className={`flex items-center space-x-4 p-3 rounded-2xl transition-all duration-300 ${
-        active 
-          ? 'bg-white text-black border border-white' 
-          : 'bg-brand-gray text-white border-none'
-      }`}
-    >
-      <div 
-        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold ${
-          active 
-            ? 'bg-black text-white' 
-            : 'bg-white/10 text-white/40'
-        }`}
-      >
-        {number}
-      </div>
-      <span className="text-sm font-medium tracking-tight">{text}</span>
-    </div>
-  );
-}
-
-export function InputGroup({ 
-  label, 
-  placeholder, 
-  type, 
-  value, 
-  onChange 
-}: { 
-  label: string; 
-  placeholder: string; 
-  type: string; 
-  value?: string; 
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void; 
-}) {
-  return (
-    <div className="space-y-1.5 flex-1">
-      <label className="text-xs font-medium text-white/70">{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        className="w-full bg-brand-gray border-none rounded-xl h-11 px-4 text-white placeholder:text-white/20 focus:ring-2 focus:ring-white/20 outline-none text-xs"
-      />
-    </div>
   );
 }

@@ -1,5 +1,3 @@
-import base64
-import io
 import os
 import re
 import requests
@@ -12,8 +10,8 @@ load_dotenv()
 
 # Page Configuration
 st.set_page_config(
-    page_title="SlothChef AI 🦥🍳",
-    page_icon="🦥",
+    page_title="Cooked Literally (Legacy)",
+    page_icon="🍳",
     layout="wide"
 )
 
@@ -62,14 +60,7 @@ with st.sidebar:
     st.image("https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=500&auto=format&fit=crop&q=60", caption="Channel your inner sloth 🦥")
     st.markdown("### ⚙️ Engine Settings")
     
-    provider = st.radio(
-        "Open-Weight / Gemma Backend:",
-        ["Hugging Face Inference (Gemma 2 / Open-Weight)", "Local Ollama (Gemma 2 / Moondream)", "Direct Open Weights / Fallback"],
-        index=0
-    )
-    
     hf_token = st.text_input("Hugging Face API Token (Optional / Free):", value=os.getenv("HF_TOKEN", ""), type="password", help="Free token from huggingface.co/settings/tokens to query Gemma 2 9B")
-    
     st.markdown("---")
     st.markdown("### 🎙️ ElevenLabs Voice (Optional)")
     st.markdown("<span class='badge-eleven'>Sponsor Track</span>", unsafe_allow_html=True)
@@ -79,18 +70,16 @@ with st.sidebar:
         value=os.getenv("ELEVENLABS_VOICE_ID", "MmQVkVZnQ0dUbfWzcW6f"),
         help="Custom Voice ID from your ElevenLabs library"
     )
-    
-    st.markdown("---")
-    st.markdown("### 🏆 Hackathon Tracks")
-    st.markdown("- **Best Use of Open-Source AI**")
-    st.markdown("- **Best Use of Gemma** ($200)")
-    st.markdown("- **Best Use of ElevenLabs** ($100)")
-    st.markdown("- **Week 3 Theme:** Slow & Steady / Sloth Day")
+
+# This file is retained as a legacy Streamlit prototype. The supported product path
+# is the React/Vite frontend backed by FastAPI.
+st.warning("Legacy prototype: use the React/FastAPI application for the maintained Cooked Literally workflow.")
+
 
 # Main Header
-st.markdown("<div class='main-header'>🦥 SlothChef: Zero-Effort Cooking with Open AI</div>", unsafe_allow_html=True)
+st.markdown("<div class='main-header'>🍳 Cooked Literally: Zero-Effort Cooking</div>", unsafe_allow_html=True)
 st.markdown(
-    "<div class='sub-header'>Snap a photo of your fridge or pantry. Let <b>open-weight Vision & Google Gemma</b> decide what to cook so you never have to think or stand there with the door open again!</div>",
+    "<div class='sub-header'>Legacy prototype. For the maintained Cooked Literally workflow, run the React frontend with the FastAPI backend.</div>",
     unsafe_allow_html=True
 )
 
@@ -154,8 +143,6 @@ def query_gemma_hf(prompt, token=None):
             return None
     except Exception as e:
         return None
-
-import re
 
 def extract_cooking_steps(recipe_text):
     """Extract only the cooking steps/instructions, stripping markdown and preamble."""

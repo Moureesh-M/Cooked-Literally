@@ -7,7 +7,7 @@ from typing import List, Literal, Optional
 
 import httpx
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, Form, HTTPException, Response, UploadFile, status
+from fastapi import FastAPI, File, HTTPException, Response, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -57,19 +57,20 @@ class RecipeRequest(BaseModel):
 class RecipeResponse(BaseModel):
     name: str
     time: str
+    servings: str
     dishes: str
     ingredients: List[str]
     suggested_ingredients: List[str] = Field(default_factory=list)
     steps: List[str]
     payoff: str
     chef_notes: Optional[str] = None
+    safety_notes: Optional[str] = None
     effort_level: Literal["aint_cookin", "can_cook", "ramsay"]
     source: Literal["huggingface", "google", "deterministic_fallback"] = "deterministic_fallback"
     fallback_reason: Optional[str] = None
 
 
 class TTSRequest(BaseModel):
-    recipe_text: str = Field(..., min_length=1, max_length=300)
     steps: List[str] = Field(..., min_length=1, max_length=12)
     eleven_api_key: Optional[str] = Field(None, max_length=500)
     voice_id: Optional[str] = Field(DEFAULT_VOICE_ID, min_length=1, max_length=200)
@@ -114,6 +115,7 @@ Available ingredients supplied by the user:
 
 Cooking requirements:
 - Use ingredients from the supplied list in the recipe.
+- Include practical quantities when the user's input gives enough information; otherwise use clear approximate amounts.
 - You may list optional suggested ingredients only for can_cook or ramsay.
 - Make every step actionable and include heat, approximate time, and a sensory doneness cue.
 - Return only one JSON object. No Markdown, explanation, or code fences.
@@ -121,12 +123,14 @@ Cooking requirements:
 {{
   "name": "string",
   "time": "string",
+  "servings": "string",
   "dishes": "string",
   "ingredients": ["string"],
   "suggested_ingredients": ["string"],
   "steps": ["string"],
   "payoff": "string",
   "chef_notes": "string",
+  "safety_notes": "string",
   "effort_level": "{effort_level}"
 }}"""
 
@@ -159,6 +163,7 @@ def deterministic_recipe(ingredients: str, effort_level: str, reason: str) -> Re
         return RecipeResponse(
             name=sanitize_recipe_title(f"Pan-Seared {main_item.title()} with Skillet Reduction"),
             time="35 mins",
+            servings="Serves 1-2",
             dishes="One heavy skillet, board, and spoon",
             ingredients=items or [main_item, second_item],
             suggested_ingredients=["garlic", "fresh herbs", "lemon", "cold butter"],
@@ -173,6 +178,7 @@ def deterministic_recipe(ingredients: str, effort_level: str, reason: str) -> Re
             ],
             payoff="A deeply browned centerpiece with a glossy pan sauce and controlled technique.",
             chef_notes="Let the pan create color before moving the food.",
+            safety_notes="Cook eggs, meat, and other perishable ingredients until safely done.",
             effort_level=effort_level,
             source="deterministic_fallback",
             fallback_reason=reason,
@@ -181,6 +187,7 @@ def deterministic_recipe(ingredients: str, effort_level: str, reason: str) -> Re
         return RecipeResponse(
             name=sanitize_recipe_title(f"Golden {main_item.title()} Skillet"),
             time="15 mins",
+            servings="Serves 1-2",
             dishes="One skillet and a spoon",
             ingredients=items or [main_item, second_item],
             suggested_ingredients=["lemon", "smoked paprika", "fresh herbs"],
@@ -193,6 +200,7 @@ def deterministic_recipe(ingredients: str, effort_level: str, reason: str) -> Re
             ],
             payoff="A balanced homemade meal with moderate effort and very little cleanup.",
             chef_notes="Season in layers instead of adding all the salt at the end.",
+            safety_notes="Cook perishable ingredients until safely done before serving.",
             effort_level=effort_level,
             source="deterministic_fallback",
             fallback_reason=reason,
@@ -200,6 +208,7 @@ def deterministic_recipe(ingredients: str, effort_level: str, reason: str) -> Re
     return RecipeResponse(
         name=sanitize_recipe_title(f"Crispy {main_item.title()} Skillet"),
         time="5 mins",
+        servings="Serves 1",
         dishes="One skillet",
         ingredients=items or [main_item, second_item],
         suggested_ingredients=[],
@@ -210,6 +219,7 @@ def deterministic_recipe(ingredients: str, effort_level: str, reason: str) -> Re
         ],
         payoff="A fast, satisfying meal with no prep and almost no cleanup.",
         chef_notes="Keep the heat steady and do not overcrowd the pan.",
+        safety_notes="Check that perishable ingredients are fully cooked before eating.",
         effort_level=effort_level,
         source="deterministic_fallback",
         fallback_reason=reason,
