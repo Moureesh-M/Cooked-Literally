@@ -79,6 +79,7 @@ The request is intentionally small. The backend does not send an image, a UI des
 {
   "name": "Crispy Pan-Toasted Egg Skillet",
   "time": "4 mins",
+  "servings": "Serves 1",
   "dishes": "1 skillet",
   "ingredients": ["eggs", "rice", "soy sauce"],
   "suggested_ingredients": [],
@@ -89,13 +90,14 @@ The request is intentionally small. The backend does not send an image, a UI des
   ],
   "payoff": "A fast meal with almost no cleanup.",
   "chef_notes": "Keep the pan hot and season in layers.",
+  "safety_notes": "Cook perishable ingredients until safely done before eating.",
   "effort_level": "aint_cookin",
   "source": "google",
   "fallback_reason": null
 }
 ```
 
-Required fields are `name`, `time`, `dishes`, `ingredients`, `steps`, `payoff`, and `effort_level`. `suggested_ingredients`, `chef_notes`, `source`, and `fallback_reason` communicate optional details and provider/fallback provenance.
+Required fields are `name`, `time`, `servings`, `dishes`, `ingredients`, `steps`, `payoff`, and `effort_level`. `suggested_ingredients`, `chef_notes`, `safety_notes`, `source`, and `fallback_reason` communicate optional details and provider/fallback provenance.
 
 ### Pantry scan response
 
@@ -112,14 +114,13 @@ Required fields are `name`, `time`, `dishes`, `ingredients`, `steps`, `payoff`, 
 
 ```json
 {
-  "recipe_text": "Crispy Pan-Toasted Egg Skillet",
   "steps": ["Heat the pan...", "Add the eggs..."],
   "eleven_api_key": "optional",
   "voice_id": "optional"
 }
 ```
 
-The current backend requires an ElevenLabs key for this endpoint and returns `audio/mpeg` on success.
+The backend requires an ElevenLabs key for this endpoint and returns `audio/mpeg` on success. The recipe title is not sent because narration is generated from the structured steps only.
 
 ## 3. Provider selection algorithms
 
@@ -180,7 +181,7 @@ if network error:
     return HTTP 503
 ```
 
-`recipe_text` is currently accepted but not included in the synthesized text. Keep it in the contract for compatibility or remove it in a versioned API revision.
+The narration contract intentionally accepts only structured steps; the recipe title is not sent to the provider.
 
 ## 4. Frontend state machine
 
@@ -202,9 +203,16 @@ RECIPE_GENERATING
   └─ failure → INPUT_WITH_ERROR
 
 RECIPE_READY
+  ├─ start cooking → COOKING_MODE
   ├─ ElevenLabs request → AUDIO_LOADING → AUDIO_READY or RECIPE_READY
   ├─ browser speech → browser-controlled speech
   └─ reset → INPUT
+
+COOKING_MODE
+  ├─ show first incomplete step
+  ├─ complete step → next incomplete step
+  ├─ keep screen awake → Wake Lock API when available
+  └─ finish all steps → completion state
 ```
 
 Important lifecycle rules:
@@ -214,6 +222,8 @@ Important lifecycle rules:
 - Cancel browser speech on unmount.
 - Disable generation while a request is active.
 - Preserve the generated recipe if optional narration fails.
+- Keep ingredient and step completion state local to the current recipe.
+- Treat Wake Lock as an optional enhancement and show an explicit unsupported/error message.
 
 ## 5. Error model
 

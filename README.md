@@ -22,7 +22,7 @@ Theme: **"AI Belongs to Everyone: Slow and Steady / Sloth Day"**
 ```
 Cooked-Literally/
 ├── backend_api.py       # FastAPI REST backend (vision scan, recipe gen, TTS narration)
-├── app.py               # Streamlit prototype (standalone, no backend required)
+├── app.py               # Legacy Streamlit prototype (not the supported product path)
 ├── .env.example         # Environment variable template — copy to .env and fill in keys
 ├── frontend/
 │   ├── src/
@@ -33,6 +33,10 @@ Cooked-Literally/
 │   └── vite.config.ts
 └── README.md
 ```
+
+The supported application is the React/Vite frontend backed by FastAPI (Option A
+below). `app.py` is retained only as a historical prototype and does not share the
+maintained structured JSON workflow.
 
 ---
 
