@@ -16,6 +16,7 @@ load_dotenv()
 logger = logging.getLogger("cooked_literally")
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 
+# Topic: Environment variables and secrets management.
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 DEFAULT_ELEVEN_KEY = os.getenv("ELEVENLABS_API_KEY", "")
 DEFAULT_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "MmQVkVZnQ0dUbfWzcW6f")
@@ -31,6 +32,7 @@ app = FastAPI(
     version="1.1.0",
 )
 
+# Topic: Middleware - CORS middleware controls which frontend origins may call the API.
 configured_origins = [
     origin.strip()
     for origin in os.getenv(
@@ -227,6 +229,7 @@ def deterministic_recipe(ingredients: str, effort_level: str, reason: str) -> Re
 
 
 async def call_huggingface(prompt: str, token: str, effort_level: str) -> RecipeResponse:
+    # Topic: Async data fetching from an external API.
     url = "https://api-inference.huggingface.co/models/google/gemma-2-9b-it"
     payload = {
         "inputs": f"<start_of_turn>user\n{prompt}\n<end_of_turn>\n<start_of_turn>model\n",
@@ -242,6 +245,7 @@ async def call_huggingface(prompt: str, token: str, effort_level: str) -> Recipe
 
 
 async def call_google(prompt: str, effort_level: str) -> RecipeResponse:
+    # Topic: Async data fetching from an external API.
     url = (
         "https://generativelanguage.googleapis.com/v1beta/models/"
         f"gemini-2.0-flash:generateContent?key={GOOGLE_API_KEY}"
@@ -264,11 +268,13 @@ async def call_google(prompt: str, effort_level: str) -> RecipeResponse:
 
 @app.get("/api/v1/health", status_code=status.HTTP_200_OK)
 def health_check():
+    # Topic: RESTful endpoint design and correct HTTP status codes.
     return {"status": "healthy", "service": "Cooked Literally REST API"}
 
 
 @app.post("/api/v1/pantry/scan", status_code=status.HTTP_200_OK)
 async def scan_pantry(image: UploadFile = File(...)):
+    # Topic: RESTful endpoint design, async handling, and HTTP status codes.
     if image.content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(status_code=415, detail="Upload a JPEG, PNG, or WebP image.")
     image_bytes = await image.read(MAX_IMAGE_BYTES + 1)
@@ -289,6 +295,7 @@ async def scan_pantry(image: UploadFile = File(...)):
         ]}],
     }
     try:
+        # Topic: Async data fetching and server-side error handling.
         async with httpx.AsyncClient(timeout=25.0) as client:
             response = await client.post(
                 f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GOOGLE_API_KEY}",
@@ -312,6 +319,7 @@ async def scan_pantry(image: UploadFile = File(...)):
 
 @app.post("/api/v1/recipes/generate", response_model=RecipeResponse, status_code=status.HTTP_201_CREATED)
 async def generate_recipe(payload: RecipeRequest):
+    # Topic: RESTful endpoint design and server-side error handling.
     ingredients = payload.ingredients.strip()
     if not ingredients:
         raise HTTPException(status_code=422, detail="Provide at least one ingredient.")
@@ -320,12 +328,14 @@ async def generate_recipe(payload: RecipeRequest):
     token = payload.hf_token or HF_TOKEN
     if token:
         try:
+            # Topic: Async provider calls with explicit error handling and fallback.
             return await call_huggingface(prompt, token, payload.effort_level)
         except (httpx.HTTPError, ValueError, json.JSONDecodeError, KeyError, IndexError, TypeError) as error:
             provider_errors.append(f"huggingface:{type(error).__name__}")
             logger.warning("Recipe provider failed: huggingface (%s)", type(error).__name__)
     if GOOGLE_API_KEY:
         try:
+            # Topic: Async provider calls with explicit error handling and fallback.
             return await call_google(prompt, payload.effort_level)
         except (httpx.HTTPError, ValueError, json.JSONDecodeError, KeyError, IndexError, TypeError) as error:
             provider_errors.append(f"google:{type(error).__name__}")
@@ -336,6 +346,7 @@ async def generate_recipe(payload: RecipeRequest):
 
 @app.post("/api/v1/recipes/narration", status_code=status.HTTP_200_OK)
 async def stream_narration(payload: TTSRequest):
+    # Topic: RESTful endpoint design, async data fetching, and server-side errors.
     key = payload.eleven_api_key.strip() if payload.eleven_api_key else DEFAULT_ELEVEN_KEY
     if not key:
         raise HTTPException(status_code=400, detail="ElevenLabs is not configured; use browser narration instead.")

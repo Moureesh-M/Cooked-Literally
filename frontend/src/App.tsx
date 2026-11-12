@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 
 export default function App() {
+  // Topic: React state management with useState.
   const [ingredientsInput, setIngredientsInput] = useState('');
   const [effortLevel, setEffortLevel] = useState<EffortLevel>('aint_cookin');
   const [elevenApiKey, setElevenApiKey] = useState('');
@@ -58,7 +59,7 @@ export default function App() {
     setIsCameraActive(false);
   }, []);
 
-  // Cleanup camera stream and speech on unmount
+  // Topic: React side effects with useEffect and cleanup functions.
   React.useEffect(() => {
     return () => {
       stopCamera();
@@ -66,13 +67,14 @@ export default function App() {
     };
   }, [stopCamera]);
 
+  // Topic: React side effects with useEffect for object URL cleanup.
   React.useEffect(() => {
     return () => {
       if (audioUrl) URL.revokeObjectURL(audioUrl);
     };
   }, [audioUrl]);
 
-  // Start webcam
+  // Topic: JavaScript async/await and the event loop for browser APIs.
   const startCamera = async () => {
     const requestId = cameraRequestRef.current + 1;
     cameraRequestRef.current = requestId;
@@ -109,7 +111,7 @@ export default function App() {
     }
   };
 
-  // Handle file upload
+  // Topic: Callback-based event handling with FileReader.
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -125,7 +127,7 @@ export default function App() {
 
   const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
-  // Vision Analysis via REST: POST /api/v1/pantry/scan
+  // Topic: Async data fetching, Promises, and RESTful API consumption.
   const analyzeKitchenImage = async (base64Img: string) => {
     setAnalyzingImage(true);
     setStatusMessage('Analyzing your fridge scene with open-weight vision...');
@@ -165,7 +167,7 @@ export default function App() {
     }
   };
 
-  // Recipe Generation via REST: POST /api/v1/recipes/generate
+  // Topic: JavaScript async/await, Promises, and RESTful API consumption.
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (analyzingImage) {
@@ -247,6 +249,7 @@ export default function App() {
     window.speechSynthesis.speak(utterance);
   };
 
+  // Topic: React component composition - App composes reusable InputGroup and StepItem components.
   return (
     <main className="flex min-h-screen w-full bg-black selection:bg-white/30 p-2 transition-all duration-500 lg:h-screen lg:overflow-hidden lg:p-4">
       {/* 3. Left Column (Hero & Background Video) */}
